@@ -28,8 +28,10 @@ impl App {
         let t = self.s();
         let lang = self.lang;
         let gen = self.generation;
-        let esc = ctx.input(|i| i.key_pressed(Key::Escape));
-        let enter = ctx.input(|i| i.key_pressed(Key::Enter)) && !egui::Popup::is_any_open(ctx);
+        // A popup (currency list, date picker) inside the dialog gets the first click outside and the first Escape.
+        let popup = egui::Popup::is_any_open(ctx);
+        let esc = ctx.input(|i| i.key_pressed(Key::Escape)) && !popup;
+        let enter = ctx.input(|i| i.key_pressed(Key::Enter)) && !popup;
         let mut act = Act::None;
         match &mut dialog {
             Dialog::Edit(form) => {
@@ -65,7 +67,7 @@ impl App {
                     }
                 });
                 // Escape and a click outside close a clean form at once and ask before throwing changes away.
-                if (esc || backdrop) && matches!(act, Act::None) {
+                if (esc || (backdrop && !popup)) && matches!(act, Act::None) {
                     act = if form.dirty() { Act::AskDiscard } else { Act::Close };
                 }
                 if enter && matches!(act, Act::None) {
@@ -85,7 +87,7 @@ impl App {
                         act = Act::BackToEdit;
                     }
                 });
-                if (esc || enter || backdrop) && matches!(act, Act::None) {
+                if (esc || enter || (backdrop && !popup)) && matches!(act, Act::None) {
                     act = Act::BackToEdit;
                 }
             }
@@ -103,7 +105,7 @@ impl App {
                         act = Act::Close;
                     }
                 });
-                if esc || enter || backdrop {
+                if esc || enter || (backdrop && !popup) {
                     act = Act::Close;
                 }
             }
@@ -136,7 +138,7 @@ impl App {
                         act = Act::Close;
                     }
                 });
-                if esc || backdrop {
+                if esc || (backdrop && !popup) {
                     act = Act::Close;
                 }
                 if enter && valid && matches!(act, Act::None) {
@@ -162,7 +164,7 @@ impl App {
                         act = Act::Close;
                     }
                 });
-                if esc || backdrop {
+                if esc || (backdrop && !popup) {
                     act = Act::Close;
                 }
                 if enter && valid && matches!(act, Act::None) {
