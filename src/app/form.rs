@@ -27,6 +27,8 @@ pub struct Form {
     /// Set once Save was pressed with mistakes: errors are shown only after that.
     pub tried: bool,
     pub focus: bool,
+    /// What the fields held when the form opened, to tell whether anything was changed.
+    pub orig: String,
 }
 
 /// Which fields are wrong.
@@ -60,6 +62,24 @@ pub struct Built {
 }
 
 impl Form {
+    /// All editable fields as one string.
+    fn key(&self) -> String {
+        format!(
+            "{}|{}|{}|{}|{:?}|{}|{:?}|{}|{}|{}|{}|{}",
+            self.name, self.url, self.price, self.currency, self.kind, self.every, self.unit, self.date, self.category, self.adding_category, self.new_category, self.note
+        )
+    }
+
+    /// `true` when the person changed anything since the form opened.
+    pub fn dirty(&self) -> bool {
+        self.key() != self.orig
+    }
+
+    fn sealed(mut self) -> Form {
+        self.orig = self.key();
+        self
+    }
+
     pub fn new(currency: &str, lang: Lang, today: NaiveDate) -> Form {
         Form {
             id: None,
@@ -77,7 +97,9 @@ impl Form {
             note: String::new(),
             tried: false,
             focus: true,
+            orig: String::new(),
         }
+        .sealed()
     }
 
     pub fn from_sub(s: &Subscription, lang: Lang) -> Form {
@@ -101,7 +123,9 @@ impl Form {
             note: s.note.clone(),
             tried: false,
             focus: true,
+            orig: String::new(),
         }
+        .sealed()
     }
 
     fn every_value(&self) -> Option<u32> {
@@ -222,6 +246,24 @@ mod tests {
             let b2 = g.build().ok().unwrap();
             assert_eq!((b2.price, b2.period, b2.start), (sub.price, sub.period, sub.start));
         }
+    }
+
+    #[test]
+    fn dirty_only_after_a_change() {
+        let mut f = Form::new("USD", Lang::En, today());
+        assert!(!f.dirty());
+        f.name = "x".into();
+        assert!(f.dirty());
+        f.name.clear();
+        assert!(!f.dirty(), "undoing the change makes it clean again");
+        f.tried = true;
+        f.focus = false;
+        assert!(!f.dirty(), "UI flags are not changes");
+        let sub = Subscription { id: "1".into(), name: "A".into(), url: String::new(), price: Decimal::from(5), currency: "USD".into(), period: Period::Monthly, start: today(), category: String::new(), note: String::new(), paused: None };
+        let mut g = Form::from_sub(&sub, Lang::Ru);
+        assert!(!g.dirty());
+        g.price = "6".into();
+        assert!(g.dirty());
     }
 
     #[test]

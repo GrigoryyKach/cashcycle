@@ -15,6 +15,8 @@ enum Act {
     None,
     Close,
     Save,
+    AskDiscard,
+    BackToEdit,
     Delete(String),
     Pause(String),
     Resume(String),
@@ -34,7 +36,7 @@ impl App {
                 let cats = self.data.all_categories();
                 let (first, today, recent) = (self.cfg.first_day.weekday(), self.today, self.cfg.recent_currencies.clone());
                 let max_h = (ctx.content_rect().height() - 90.0).max(300.0);
-                widgets::modal(ctx, p, "edit", gen, 500.0, |ui| {
+                let backdrop = widgets::modal(ctx, p, "edit", gen, 500.0, |ui| {
                     ScrollArea::vertical().max_height(max_h).auto_shrink([true, true]).show(ui, |ui| {
                         ui.set_width(500.0 - 12.0);
                         edit_body(ui, p, form, lang, &cats, &recent, first, today, self.data.categories.is_empty());
@@ -62,11 +64,29 @@ impl App {
                         };
                     }
                 });
-                if esc {
-                    act = Act::Close;
+                // Escape and a click outside close a clean form at once and ask before throwing changes away.
+                if (esc || backdrop) && matches!(act, Act::None) {
+                    act = if form.dirty() { Act::AskDiscard } else { Act::Close };
                 }
                 if enter && matches!(act, Act::None) {
                     act = Act::Save;
+                }
+            }
+            Dialog::Discard(_) => {
+                let backdrop = widgets::modal(ctx, p, "discard", gen, 420.0, |ui| {
+                    ui.label(RichText::new(t.discard_title).font(theme::medium(18.0)).color(p.text));
+                    ui.add_space(8.0);
+                    ui.add(egui::Label::new(RichText::new(t.discard_body).font(theme::reg(14.0)).color(p.text2)).wrap());
+                    ui.add_space(20.0);
+                    let out = widgets::destructive_footer(ui, p, t.keep_editing, t.discard);
+                    if out.confirm {
+                        act = Act::Close;
+                    } else if out.cancel {
+                        act = Act::BackToEdit;
+                    }
+                });
+                if (esc || enter || backdrop) && matches!(act, Act::None) {
+                    act = Act::BackToEdit;
                 }
             }
             Dialog::Delete(id) => {
@@ -170,6 +190,16 @@ impl App {
         match act {
             Act::None => {}
             Act::Close => keep = false,
+            Act::AskDiscard => {
+                if let Dialog::Edit(form) = &dialog {
+                    dialog = Dialog::Discard(Box::new(form.clone()));
+                }
+            }
+            Act::BackToEdit => {
+                if let Dialog::Discard(form) = dialog {
+                    dialog = Dialog::Edit(*form);
+                }
+            }
             Act::Save => {
                 if let Dialog::Edit(form) = &mut dialog {
                     match form.build() {

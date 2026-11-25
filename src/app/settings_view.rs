@@ -188,7 +188,7 @@ impl App {
                     let t = self.s();
                     group(ui, p, t.about, |ui| {
                         ui.horizontal(|ui| {
-                            theme::mark(ui, 32.0, widgets::mark_glyph, p);
+                            widgets::app_icon(ui, 32.0);
                             ui.vertical(|ui| {
                                 ui.spacing_mut().item_spacing.y = 2.0;
                                 ui.label(RichText::new("Cashcycle").font(theme::medium(15.0)).color(p.text));

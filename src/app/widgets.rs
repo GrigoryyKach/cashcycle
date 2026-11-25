@@ -56,7 +56,6 @@ pub fn fit(painter: &Painter, text: &str, font: FontId, color: Color32, max_w: f
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Icon {
     Gear,
-    Refresh,
     Link,
     Left,
     Right,
@@ -78,22 +77,6 @@ pub fn icon(p: &Painter, ic: Icon, c: Pos2, size: f32, col: Color32) {
                 line(c + d * (s * 0.68), c + d * (s * 0.98));
             }
             p.circle_stroke(c, s * 0.75, st);
-        }
-        Icon::Refresh => {
-            // An open circle with an arrow head at its end.
-            let r = s * 0.62;
-            let n = 20;
-            let (a0, a1) = (0.5_f32, std::f32::consts::TAU - 0.35);
-            let pts: Vec<Pos2> = (0..=n)
-                .map(|i| {
-                    let a = a0 + (a1 - a0) * i as f32 / n as f32;
-                    c + vec2(a.cos(), a.sin()) * r
-                })
-                .collect();
-            p.add(egui::Shape::line(pts.clone(), st));
-            let end = *pts.last().unwrap();
-            line(end, end + vec2(s * 0.42, -s * 0.05));
-            line(end, end + vec2(s * 0.12, s * 0.45));
         }
         Icon::Link => {
             // The "open in browser" arrow: a box with an arrow leaving its corner.
@@ -139,23 +122,78 @@ pub fn icon_button(ui: &mut Ui, ic: Icon, side: f32, p: &Pal) -> Response {
     resp.on_hover_cursor(CursorIcon::PointingHand)
 }
 
-/// The Cashcycle mark: an arrow circling a coin, in the accent colour. Flat, no tile.
-pub fn mark_glyph(painter: &Painter, c: Pos2, col: Color32) {
+/// A circular arrow: about 300 degrees of arc with a clear arrowhead at its end, turned by `turn` radians.
+pub fn refresh_glyph(p: &Painter, c: Pos2, size: f32, col: Color32, turn: f32) {
+    let r = size * 0.36;
     let st = Stroke::new(1.6, col);
-    let r = 10.0;
-    let n = 24;
-    let (a0, a1) = (-0.15_f32, std::f32::consts::TAU - 0.9);
-    let pts: Vec<Pos2> = (0..=n)
-        .map(|i| {
-            let a = a0 + (a1 - a0) * i as f32 / n as f32;
-            c + vec2(a.cos(), a.sin()) * r
-        })
-        .collect();
-    painter.add(egui::Shape::line(pts.clone(), st));
-    let end = *pts.last().unwrap();
-    painter.line_segment([end, end + vec2(3.6, -1.6)], st);
-    painter.line_segment([end, end + vec2(0.4, 4.2)], st);
-    painter.circle_stroke(c, 4.2, st);
+    let sweep = 300.0_f32.to_radians();
+    let a0 = -std::f32::consts::FRAC_PI_2 + 0.9 + turn; // the gap sits at the top right
+    let a1 = a0 + sweep;
+    let n = 28;
+    let at = |a: f32| c + vec2(a.cos(), a.sin()) * r;
+    let pts: Vec<Pos2> = (0..=n).map(|i| at(a0 + sweep * i as f32 / n as f32)).collect();
+    p.add(egui::Shape::line(pts, st));
+    // The arrowhead: tip a little past the end of the arc, wings 150 degrees back from the direction of travel.
+    let tip = at(a1);
+    let dir = vec2(-a1.sin(), a1.cos());
+    let head = size * 0.30;
+    for sign in [-1.0_f32, 1.0] {
+        let ang = 150.0_f32.to_radians() * sign;
+        let (sn, cs) = ang.sin_cos();
+        let wing = vec2(dir.x * cs - dir.y * sn, dir.x * sn + dir.y * cs) * head;
+        p.line_segment([tip, tip + wing], st);
+    }
+}
+
+/// The refresh button: a circular arrow that turns and is disabled while `busy`. Returns `true` when clicked.
+pub fn refresh_button(ui: &mut Ui, side: f32, busy: bool, tip: &str, p: &Pal) -> bool {
+    let (rect, resp) = ui.allocate_exact_size(vec2(side, side), if busy { Sense::hover() } else { Sense::click() });
+    let t = if busy { 0.0 } else { theme::fade(ui, resp.id.with("hover"), resp.hovered()) };
+    ui.painter().rect_filled(rect, 6.0, theme::alpha(p.raised, (t * 255.0) as u8));
+    let (col, turn) = if busy {
+        ui.ctx().request_repaint();
+        (p.accent, ui.input(|i| i.time) as f32 * std::f32::consts::TAU * 0.9)
+    } else {
+        (theme::mix(p.text2, p.text, t), 0.0)
+    };
+    refresh_glyph(ui.painter(), rect.center(), side * 0.55, col, turn);
+    let resp = resp.on_hover_text(tip);
+    if busy { false } else { resp.on_hover_cursor(CursorIcon::PointingHand).clicked() }
+}
+
+/// The official artwork, pre-rendered from `tasks/icons/cashcycle` at the sizes that land on whole pixels at 1x,
+/// 1.25x, 1.5x, 2x and 3x for a 32 px logo (the same master as the exe and window icon).
+const ICONS: [(u32, &[u8]); 5] = [
+    (32, include_bytes!("../../assets/icons/icon-32.png")),
+    (40, include_bytes!("../../assets/icons/icon-40.png")),
+    (48, include_bytes!("../../assets/icons/icon-48.png")),
+    (64, include_bytes!("../../assets/icons/icon-64.png")),
+    (128, include_bytes!("../../assets/icons/icon-128.png")),
+];
+
+/// Draws the app icon `size` points wide from the real artwork: the pre-rendered size nearest to this screen's
+/// density, placed on the pixel grid so its edges stay sharp.
+pub fn app_icon(ui: &mut Ui, size: f32) -> Response {
+    let ctx = ui.ctx().clone();
+    let ppp = ctx.pixels_per_point();
+    let want = (size * ppp).round().max(1.0) as u32;
+    let (px, bytes) = ICONS.iter().min_by_key(|(n, _)| ((*n as i64 - want as i64).abs(), *n < want)).copied().unwrap_or(ICONS[0]);
+    let id = Id::unique(("app-icon", px));
+    let tex: egui::TextureHandle = match ctx.data(|d| d.get_temp::<egui::TextureHandle>(id)) {
+        Some(t) => t,
+        None => {
+            let img = eframe::icon_data::from_png_bytes(bytes).unwrap_or_default();
+            let color = egui::ColorImage::from_rgba_unmultiplied([img.width as usize, img.height as usize], &img.rgba);
+            let t = ctx.load_texture(format!("app-icon-{px}"), color, egui::TextureOptions::LINEAR);
+            ctx.data_mut(|d| d.insert_temp(id, t.clone()));
+            t
+        }
+    };
+    let (rect, resp) = ui.allocate_exact_size(vec2(size, size), Sense::hover());
+    let min = pos2((rect.min.x * ppp).round() / ppp, (rect.min.y * ppp).round() / ppp);
+    let drawn = if px == want { px as f32 / ppp } else { size };
+    ui.painter().image(tex.id(), Rect::from_min_size(min, vec2(drawn, drawn)), Rect::from_min_max(pos2(0.0, 0.0), pos2(1.0, 1.0)), Color32::WHITE);
+    resp
 }
 
 // ───────────────────────── buttons ─────────────────────────
@@ -273,7 +311,7 @@ pub fn modal(ctx: &egui::Context, p: &Pal, name: &str, generation: u64, width: f
     // modal always has the card on top of the backdrop.
     let name = format!("{name}-{generation}");
     let screen = ctx.content_rect();
-    let dim = egui::Area::new(Id::unique((&name, "dim"))).order(Order::Foreground).fixed_pos(screen.min).show(ctx, |ui| {
+    let dim = egui::Area::new(Id::unique((&name, "dim"))).order(Order::Middle).fixed_pos(screen.min).show(ctx, |ui| {
         let r = ui.allocate_rect(screen, Sense::click());
         ui.painter().rect_filled(screen, 0.0, Color32::from_black_alpha(if p.dark { 150 } else { 90 }));
         r
@@ -384,4 +422,62 @@ pub fn field<R>(ui: &mut Ui, caption: &str, p: &Pal, add: impl FnOnce(&mut Ui) -
     ui.label(egui::RichText::new(caption).font(theme::reg(12.5)).color(p.text2));
     ui.add_space(2.0);
     add(ui)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use egui::{Event, Modifiers, PointerButton, RawInput};
+
+    fn frame(ctx: &egui::Context, events: Vec<Event>, t: f64) -> Option<bool> {
+        let mut input = RawInput::default();
+        input.screen_rect = Some(Rect::from_min_size(pos2(0.0, 0.0), vec2(800.0, 600.0)));
+        input.time = Some(t);
+        input.events = events;
+        let mut clicked = None;
+        let mut out = ctx.run_pass(input, |ctx| {
+            clicked = Some(modal(ctx, &Pal::dark(), "test-modal", 1, 300.0, |ui| {
+                ui.label("content");
+            }));
+        });
+        out.textures_delta.clear();
+        clicked
+    }
+
+    fn click(ctx: &egui::Context, at: Pos2, t: &mut f64) -> bool {
+        let mut hit = false;
+        for events in [
+            vec![Event::PointerMoved(at)],
+            vec![Event::PointerButton { pos: at, button: PointerButton::Primary, pressed: true, modifiers: Modifiers::NONE }],
+            vec![Event::PointerButton { pos: at, button: PointerButton::Primary, pressed: false, modifiers: Modifiers::NONE }],
+            vec![],
+        ] {
+            *t += 0.05;
+            hit |= frame(ctx, events, *t).unwrap_or(false);
+        }
+        hit
+    }
+
+    /// The bug: clicking the dimmed backdrop raised the backdrop above the card (same layer order), so the card
+    /// stopped receiving input and the screen stayed dimmed. The card must stay on top however often the
+    /// backdrop is clicked, and a click on the backdrop must be reported to the caller each time.
+    #[test]
+    fn clicking_the_backdrop_never_buries_the_card() {
+        let ctx = egui::Context::default();
+        let mut t = 0.0;
+        for _ in 0..3 {
+            t += 0.05;
+            frame(&ctx, vec![], t);
+        }
+        let card = pos2(400.0, 290.0);
+        let top = |ctx: &egui::Context, at: Pos2| ctx.layer_id_at(at).map(|l| l.order);
+        assert_eq!(top(&ctx, card), Some(Order::Foreground));
+        assert_eq!(top(&ctx, pos2(20.0, 20.0)), Some(Order::Middle), "the backdrop covers the page");
+        for _ in 0..4 {
+            assert!(click(&ctx, pos2(20.0, 20.0), &mut t), "the click outside is reported");
+            assert_eq!(top(&ctx, card), Some(Order::Foreground), "the card is still on top after the click");
+        }
+        // A click on the card itself is not a backdrop click.
+        assert!(!click(&ctx, card, &mut t));
+    }
 }

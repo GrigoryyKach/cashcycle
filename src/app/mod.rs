@@ -36,6 +36,8 @@ pub const ROW_H: f32 = 34.0;
 
 pub enum Dialog {
     Edit(Form),
+    /// "Discard changes?" over an edited form that was dismissed; the form comes back on "Keep editing".
+    Discard(Box<Form>),
     Delete(String),
     Pause { id: String, until_on: bool, until: String },
     Resume { id: String, date: String },

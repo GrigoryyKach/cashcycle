@@ -54,7 +54,7 @@ impl App {
     fn top_bar(&mut self, ui: &mut Ui, p: &Pal) {
         let t = self.s();
         ui.horizontal(|ui| {
-            theme::mark(ui, 28.0, widgets::mark_glyph, p);
+            widgets::app_icon(ui, 32.0);
             ui.label(RichText::new("Cashcycle").font(theme::medium(20.0)).color(p.text));
             ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                 if widgets::icon_button(ui, Icon::Gear, ROW_HEIGHT_ICON, p).on_hover_text(t.settings).clicked() {
@@ -74,7 +74,7 @@ impl App {
             theme::card(p).inner_margin(egui::Margin::symmetric(40, 32)).show(ui, |ui| {
                 ui.set_width(440.0);
                 ui.vertical_centered(|ui| {
-                    theme::mark(ui, 44.0, widgets::mark_glyph, p);
+                    widgets::app_icon(ui, 64.0);
                     ui.add_space(10.0);
                     ui.label(RichText::new(t.empty_title).font(theme::medium(22.0)).color(p.text));
                     ui.add_space(6.0);
@@ -152,8 +152,7 @@ impl App {
                 self.touch_cfg(&ctx);
             }
             let busy = self.rv.fetching;
-            let refresh = widgets::icon_button(ui, Icon::Refresh, 30.0, p).on_hover_text(t.rates_refresh);
-            if refresh.clicked() && !busy {
+            if widgets::refresh_button(ui, 30.0, busy, t.rates_refresh, p) {
                 let ctx = ui.ctx().clone();
                 self.rates.refresh(&ctx);
             }
