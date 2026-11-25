@@ -1,0 +1,141 @@
+{
+  "schema": 1,
+  "id": "cashcycle",
+  "name": "Cashcycle",
+  "tagline": "A clear tracker of your subscriptions and what they cost",
+  "description": "Add the services you pay for and see what they cost per month and per year, what is due next, and where the money goes. Every subscription has its own currency and billing period, and the total is shown in the currency you pick, converted at live exchange rates. Pause a subscription and it drops out of every total. Everything stays on your PC: no account, no cloud.",
+  "features": [
+    {
+      "title": "What you really pay",
+      "text": "A monthly and a yearly total of all active subscriptions. Weekly, quarterly, yearly and custom periods are all normalised to a month."
+    },
+    {
+      "title": "Any currency",
+      "text": "Each subscription keeps its own currency. Pick the currency of the total right on the card; amounts are converted at live exchange rates, and the last rates are kept for when you are offline."
+    },
+    {
+      "title": "Upcoming payments",
+      "text": "What is due in the next 30 days, with the amount in its own currency and in yours. Payment dates roll forward by themselves, month ends included."
+    },
+    {
+      "title": "Pause instead of delete",
+      "text": "A paused subscription stays in the list but is left out of every total. Resume it any time, or let it resume by itself on a date you set."
+    },
+    {
+      "title": "Categories",
+      "text": "Video, Music, Software, Cloud, Gaming and your own. A flat bar and a list show where the money goes."
+    },
+    {
+      "title": "Yours, offline",
+      "text": "Search, sort by next payment, price or name, a daily backup of your data, English, Russian and Ukrainian, light and dark themes."
+    }
+  ],
+  "category": "Finance",
+  "accent": [
+    "#a3d14a",
+    "#4d7c0f"
+  ],
+  "icon": "assets/icon.png",
+  "screenshots": [
+    "assets/screenshots/1.png",
+    "assets/screenshots/2.png",
+    "assets/screenshots/3.png",
+    "assets/screenshots/4.png",
+    "assets/screenshots/5.png",
+    "assets/screenshots/6.png"
+  ],
+  "exe": "Cashcycle.exe",
+  "asset": "Cashcycle-win-x64.zip",
+  "platforms": [
+    "windows",
+    "linux"
+  ],
+  "requirements": [
+    "Windows 10/11 x64",
+    "Internet access for exchange rates (the last rates are kept for offline use)"
+  ],
+  "linux": {
+    "asset": "Cashcycle-linux-x64.tar.gz",
+    "exe": "cashcycle",
+    "requirements": "Linux x86_64 (X11 or Wayland) with xdg-utils and curl (exchange rates)"
+  },
+  "settingsDir": "%APPDATA%\\Cashcycle",
+  "i18n": {
+    "ru": {
+      "tagline": "Понятный учёт подписок и того, сколько они стоят",
+      "description": "Добавьте сервисы, за которые вы платите, и посмотрите, сколько они стоят в месяц и в год, что оплачивать дальше и куда уходят деньги. У каждой подписки своя валюта и период оплаты, а итог показывается в выбранной вами валюте по актуальным курсам. Подписку можно поставить на паузу, и она выпадет из всех итогов. Все данные остаются на вашем ПК: без аккаунта и облака.",
+      "category": "Финансы",
+      "features": [
+        {
+          "title": "Сколько вы платите на самом деле",
+          "text": "Итог за месяц и за год по всем активным подпискам. Недельные, квартальные, годовые и свои периоды приводятся к месяцу."
+        },
+        {
+          "title": "Любая валюта",
+          "text": "У каждой подписки своя валюта. Валюту итога выбирают прямо на карточке; суммы пересчитываются по актуальным курсам, а последние курсы сохраняются на случай, когда сети нет."
+        },
+        {
+          "title": "Ближайшие платежи",
+          "text": "Что нужно оплатить в ближайшие 30 дней: сумма в своей валюте и в вашей. Даты платежей переносятся сами, в том числе в конце месяца."
+        },
+        {
+          "title": "Пауза вместо удаления",
+          "text": "Подписка на паузе остаётся в списке, но не входит ни в один итог. Возобновите её в любой момент или задайте дату, когда она возобновится сама."
+        },
+        {
+          "title": "Категории",
+          "text": "Видео, Музыка, Программы, Облако, Игры и ваши собственные. Плоская полоса и список показывают, куда уходят деньги."
+        },
+        {
+          "title": "Ваше и офлайн",
+          "text": "Поиск, сортировка по ближайшему платежу, цене или названию, ежедневная копия данных, русский, украинский и английский, светлая и тёмная темы."
+        }
+      ],
+      "requirements": [
+        "Windows 10/11 x64",
+        "Доступ в интернет для курсов валют (последние курсы сохраняются для работы офлайн)"
+      ],
+      "linux": {
+        "requirements": "Linux x86_64 (X11 или Wayland) с xdg-utils и curl (курсы валют)"
+      }
+    },
+    "uk": {
+      "tagline": "Зрозумілий облік підписок і того, скільки вони коштують",
+      "description": "Додайте сервіси, за які ви платите, і подивіться, скільки вони коштують на місяць і на рік, що оплачувати далі та куди йдуть гроші. У кожної підписки своя валюта й період оплати, а підсумок показується у вибраній вами валюті за актуальними курсами. Підписку можна поставити на паузу, і вона випаде з усіх підсумків. Усі дані лишаються на вашому ПК: без акаунта й хмари.",
+      "category": "Фінанси",
+      "features": [
+        {
+          "title": "Скільки ви платите насправді",
+          "text": "Підсумок за місяць і за рік по всіх активних підписках. Тижневі, квартальні, річні та власні періоди приводяться до місяця."
+        },
+        {
+          "title": "Будь-яка валюта",
+          "text": "У кожної підписки своя валюта. Валюту підсумку вибирають просто на картці; суми перераховуються за актуальними курсами, а останні курси зберігаються на випадок, коли мережі немає."
+        },
+        {
+          "title": "Найближчі платежі",
+          "text": "Що треба оплатити в найближчі 30 днів: сума у своїй валюті та у вашій. Дати платежів переносяться самі, зокрема наприкінці місяця."
+        },
+        {
+          "title": "Пауза замість видалення",
+          "text": "Підписка на паузі лишається в списку, але не входить в жоден підсумок. Відновіть її будь-коли або задайте дату, коли вона відновиться сама."
+        },
+        {
+          "title": "Категорії",
+          "text": "Відео, Музика, Програми, Хмара, Ігри та ваші власні. Плоска смуга й список показують, куди йдуть гроші."
+        },
+        {
+          "title": "Ваше й офлайн",
+          "text": "Пошук, сортування за найближчим платежем, ціною або назвою, щоденна копія даних, українська, російська й англійська, світла й темна теми."
+        }
+      ],
+      "requirements": [
+        "Windows 10/11 x64",
+        "Доступ до інтернету для курсів валют (останні курси зберігаються для роботи офлайн)"
+      ],
+      "linux": {
+        "requirements": "Linux x86_64 (X11 або Wayland) з xdg-utils і curl (курси валют)"
+      }
+    }
+  }
+}
